@@ -1,0 +1,49 @@
+// ---------- Pin Configuration ----------
+const int ldrPin = A0;             // LDR analog input
+const int lightRelayPin = 8;       // Relay IN1 - Grow Light
+const int motorRelayPin = 9;       // Relay IN2 - Water Motor
+
+// ---------- Timing for motor ----------
+const unsigned long motorOnDuration = 30000;   // 30 seconds ON
+const unsigned long motorOffDuration = 30000;  // 30 seconds OFF
+unsigned long previousMillis = 0;
+bool motorState = false;
+
+void setup() {
+  pinMode(lightRelayPin, OUTPUT);
+  digitalWrite(lightRelayPin, LOW);  // Light OFF initially
+
+  pinMode(motorRelayPin, OUTPUT);
+  digitalWrite(motorRelayPin, LOW);  // Motor OFF initially
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  // ---------- GROW LIGHT CONTROL ----------
+  int ldrValue = analogRead(ldrPin);
+  Serial.print("LDR Value: ");
+  Serial.println(ldrValue);
+
+  if (ldrValue < 500) {
+    digitalWrite(lightRelayPin, HIGH); // It's dark → light ON
+  } else {
+    digitalWrite(lightRelayPin, LOW);  // It's bright → light OFF
+  }
+
+  // ---------- WATER MOTOR CONTROL ----------
+  unsigned long currentMillis = millis();
+
+  if (!motorState && currentMillis - previousMillis >= motorOffDuration) {
+    motorState = true;
+    digitalWrite(motorRelayPin, HIGH); // Turn ON motor
+    previousMillis = currentMillis;
+  }
+  else if (motorState && currentMillis - previousMillis >= motorOnDuration) {
+    motorState = false;
+    digitalWrite(motorRelayPin, LOW);  // Turn OFF motor
+    previousMillis = currentMillis;
+  }
+
+  // No delay here – both systems keep running
+}
